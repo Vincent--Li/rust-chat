@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- add unique index for email
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users (email);
+
 -- create chat type: single, group, private_channel, public_channel
 CREATE TYPE chat_type AS ENUM ('single', 'group', 'private_channel', 'public_channel');
 
