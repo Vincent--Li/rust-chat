@@ -34,7 +34,7 @@ pub fn get_router(config: AppConfig) -> Router {
                 .delete(delete_chat_handler)
                 .post(send_msg_handler),
         )
-        .route("chat/:id/messages", get(list_msg_handler));
+        .route("/chat/:id/messages", get(list_msg_handler));
 
     Router::new()
         .route("/", get(index_handler))

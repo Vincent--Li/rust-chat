@@ -5,23 +5,23 @@ use tracing::instrument;
 #[debug_handler]
 #[instrument]
 pub(crate) async fn list_chat_handler() -> impl IntoResponse {
-    "chat"
+    "list_chat_handler"
 }
 
 #[debug_handler]
 #[instrument]
 pub(crate) async fn create_chat_handler() -> impl IntoResponse {
-    "chat"
+    "create_chat_handler"
 }
 
 #[debug_handler]
 #[instrument]
 pub(crate) async fn update_chat_handler() -> impl IntoResponse {
-    "chat"
+    "update_chat_handler"
 }
 
 #[debug_handler]
 #[instrument]
 pub(crate) async fn delete_chat_handler() -> impl IntoResponse {
-    "chat"
+    "delete_chat_handler"
 }
