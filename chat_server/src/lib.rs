@@ -1,5 +1,6 @@
 mod config;
 mod handlers;
+mod models;
 
 use handlers::*;
 use std::{ops::Deref, sync::Arc};
