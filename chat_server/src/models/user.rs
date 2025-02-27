@@ -4,32 +4,43 @@ use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
 
 use argon2::{Argon2, PasswordVerifier};
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tracing::info;
 
 use crate::AppError;
 use crate::User;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateUser {
+    pub fullname: String,
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SigninUser {
+    pub email: String,
+    pub password: String,
+}
+
+
 impl User {
     pub async fn find_by_email(email: &str, pool: &PgPool) -> Result<Option<Self>, AppError> {
-        let user = sqlx::query_as("SELECT id, fullname, email, created_at FROM users WHERE email = $1")
-            .bind(email)
-            .fetch_optional(pool)
-            .await?;
+        let user =
+            sqlx::query_as("SELECT id, fullname, email, created_at FROM users WHERE email = $1")
+                .bind(email)
+                .fetch_optional(pool)
+                .await?;
         Ok(user)
     }
 
     /// create a new user
-    pub async fn create(
-        email: &str,
-        fullname: &str,
-        password: &str,
-        pool: &PgPool,
-    ) -> Result<Self, AppError> {
-        let password_hash = hash_password(password)?;
+    pub async fn create(input: &CreateUser, pool: &PgPool) -> Result<Self, AppError> {
+        let password_hash = hash_password(&input.password)?;
         let user = sqlx::query_as("INSERT INTO users (email,fullname,password_hash) VALUES ($1, $2, $3) RETURNING id, fullname, email, created_at")
-        .bind(email)
-        .bind(fullname)
+        .bind(&input.email)
+        .bind(&input.fullname)
         .bind(password_hash)
         .fetch_one(pool)
         .await?;
@@ -38,24 +49,20 @@ impl User {
 
     /// verify email and password
     pub async fn verify(
-        email: &str,
-        password: &str,
+        input: &SigninUser,
         pool: &PgPool,
     ) -> Result<Option<Self>, AppError> {
-
         let user: Option<User> = sqlx::query_as(
             "SELECT id, fullname, email, password_hash, created_at FROM users WHERE email = $1",
         )
-        .bind(email)
+        .bind(&input.email)
         .fetch_optional(pool)
         .await?;
-
-        info!("verify user: {:?}", user);
 
         match user {
             Some(mut user) => {
                 let password_hash = mem::take(&mut user.password_hash);
-                if verify_password(password, &password_hash.unwrap_or_default())? {
+                if verify_password(&input.password, &password_hash.unwrap_or_default())? {
                     Ok(Some(user))
                 } else {
                     Ok(None)
@@ -116,38 +123,61 @@ mod tests {
             Path::new("../migrations"),
         );
         let pool = tdb.get_pool().await;
-        let email = "vincent@gmail.com";
-        let fullname = "vincent";
-        let password = "password";
-        let user = User::create(email, fullname, password, &pool)
-            .await
-            .unwrap();
+        let input = CreateUser::new("vincent", "vincent@gmail.com", "password");
+        let user = User::create(&input, &pool).await.unwrap();
 
         assert_eq!(user.email, "vincent@gmail.com");
         assert_eq!(user.fullname, "vincent");
         assert!(user.id > 0);
 
-        let user = User::find_by_email(email, &pool).await.unwrap();
+        let user = User::find_by_email(&input.email, &pool).await.unwrap();
         assert!(user.is_some());
         let user = user.unwrap();
         assert_eq!(user.email, "vincent@gmail.com");
         assert_eq!(user.fullname, "vincent");
 
-        let user = User::verify(email, password, &pool).await.unwrap();
+        let input = SigninUser::new(&input.email, &input.password);
+        let user = User::verify(&input, &pool)
+            .await
+            .unwrap();
         assert!(user.is_some());
 
         Ok(())
     }
 }
 
+
+// 此处之所以使用测试函数，是因为，在生产正式使用代码的时候，其实是通过Serialize、Deserialize来生成User以及CreateUser的。不需要new。这样，这些代码做production build时候，编译器会自动优化掉这些代码。
+#[cfg(test)]
 impl User {
-    pub fn new(id: i64, fullname: &str, email: &str)-> Self {
+    pub fn new(id: i64, fullname: &str, email: &str) -> Self {
         Self {
             id,
             fullname: fullname.to_string(),
             email: email.to_string(),
             password_hash: None,
             created_at: Utc::now(),
+        }
+    }
+}
+
+#[cfg(test)]
+impl CreateUser {
+    pub fn new(fullname: &str, email: &str, password: &str) -> Self {
+        Self {
+            fullname: fullname.to_string(),
+            email: email.to_string(),
+            password: password.to_string(),
+        }
+    }
+}
+
+#[cfg(test)]
+impl SigninUser {
+    pub fn new(email: &str, password: &str) -> Self {
+        Self {
+            email: email.to_string(),
+            password: password.to_string(),
         }
     }
 }
