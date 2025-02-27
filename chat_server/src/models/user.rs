@@ -3,6 +3,7 @@ use std::mem;
 use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
 
 use argon2::{Argon2, PasswordVerifier};
+use chrono::Utc;
 use sqlx::PgPool;
 use tracing::info;
 
@@ -136,5 +137,17 @@ mod tests {
         assert!(user.is_some());
 
         Ok(())
+    }
+}
+
+impl User {
+    pub fn new(id: i64, fullname: &str, email: &str)-> Self {
+        Self {
+            id,
+            fullname: fullname.to_string(),
+            email: email.to_string(),
+            password_hash: None,
+            created_at: Utc::now(),
+        }
     }
 }

@@ -6,6 +6,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AppConfig {
     pub server: ServerConfig,
+    pub auth: AuthConfig,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthConfig {
+    pub sk: String,
+    pub pk: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -1,2 +1,12 @@
 server:
   port: 6688
+auth:
+  sk: |
+    -----BEGIN PRIVATE KEY-----
+    MC4CAQAwBQYDK2VwBCIEIIZ88mZleFkKg21nfBOIM0Tld7kOOdJFzevanMi40rCZ
+    -----END PRIVATE KEY-----
+  pk: |
+    -----BEGIN PUBLIC KEY-----
+    MCowBQYDK2VwAyEAJibE+xbSUWp53mtusMIAxEjaJxWbuU1zdmIH1teuDTc=
+    -----END PUBLIC KEY-----
+

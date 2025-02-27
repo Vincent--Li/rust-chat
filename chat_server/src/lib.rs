@@ -2,9 +2,11 @@ mod config;
 mod error;
 mod handlers;
 mod models;
+mod utils;
 
 use handlers::*;
-use std::{ops::Deref, sync::Arc};
+use utils::{DecodingKey, EncodingKey};
+use std::{fmt::{self, Formatter}, ops::Deref, sync::Arc};
 
 pub use error::AppError;
 pub use models::User;
@@ -13,17 +15,19 @@ use axum::{
     routing::{get, patch, post},
     Router,
 };
+
 pub use config::AppConfig;
+
 
 #[derive(Debug, Clone)]
 pub(crate) struct AppState {
     inner: Arc<AppStateInner>,
 }
 
-#[derive(Debug)]
 pub(crate) struct AppStateInner {
-    #[allow(unused)]
     pub(crate) config: AppConfig,
+    pub(crate) ek: EncodingKey,
+    pub(crate) dk: DecodingKey,
 }
 
 pub fn get_router(config: AppConfig) -> Router {
@@ -58,8 +62,18 @@ impl Deref for AppState {
 
 impl AppState {
     pub fn new(config: AppConfig) -> Self {
+        let ek = EncodingKey::load_pem(&config.auth.pk).expect(" load pk error");
+        let dk = DecodingKey::load_pem(&config.auth.sk).expect(" load sk error");
         Self {
-            inner: Arc::new(AppStateInner { config }),
+            inner: Arc::new(AppStateInner { config, ek, dk }),
         }
+    }
+}
+
+impl fmt::Debug for AppStateInner {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AppStateInner")
+            .field("config", &self.config)
+            .finish()
     }
 }
