@@ -3,10 +3,8 @@ use std::mem;
 use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
 
 use argon2::{Argon2, PasswordVerifier};
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use tracing::info;
 
 use crate::AppError;
 use crate::User;
