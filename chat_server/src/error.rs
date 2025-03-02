@@ -17,7 +17,10 @@ pub enum AppError {
     InvalidCredentials(String),
 
     #[error("http header error: {0}")]
-    HttpHeaderError(#[from] InvalidHeaderValue)
+    HttpHeaderError(#[from] InvalidHeaderValue),
+
+    #[error("email already exists: {0}")]
+    EmailAlreadyExists(String)
 }
 
 impl IntoResponse for AppError {
@@ -28,6 +31,7 @@ impl IntoResponse for AppError {
             AppError::JwtError(_) => StatusCode::FORBIDDEN,
             AppError::InvalidCredentials(_) => StatusCode::UNAUTHORIZED,
             AppError::HttpHeaderError(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            AppError::EmailAlreadyExists(_) => StatusCode::CONFLICT,
         };
 
         (status, Json(json!({ "error" : self.to_string()}))).into_response()

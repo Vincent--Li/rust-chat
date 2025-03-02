@@ -6,8 +6,7 @@ mod utils;
 
 use anyhow::Context;
 use handlers::*;
-use serde::ser;
-use sqlx::{pool, PgPool};
+use sqlx::PgPool;
 use std::{
     fmt::{self, Formatter},
     ops::Deref,
@@ -70,8 +69,8 @@ impl Deref for AppState {
 
 impl AppState {
         pub async fn try_new(config: AppConfig) -> Result<Self, AppError> {
-        let ek = EncodingKey::load_pem(&config.auth.pk).context("load ek failed")?;
-        let dk = DecodingKey::load_pem(&config.auth.sk).context("load sk failed")?;
+        let ek = EncodingKey::load_pem(&config.auth.sk).context("load ek failed")?;
+        let dk = DecodingKey::load_pem(&config.auth.pk).context("load sk failed")?;
         let pool = PgPool::connect(&config.server.db_url)
             .await
             .context("connect to db failed")?;

@@ -3,6 +3,7 @@ use std::mem;
 use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
 
 use argon2::{Argon2, PasswordVerifier};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
@@ -35,6 +36,10 @@ impl User {
 
     /// create a new user
     pub async fn create(input: &CreateUser, pool: &PgPool) -> Result<Self, AppError> {
+        // check email exists
+        if User::find_by_email(&input.email, pool).await?.is_some() {
+            return Err(AppError::EmailAlreadyExists(input.email.to_string()));
+        }
         let password_hash = hash_password(&input.password)?;
         let user = sqlx::query_as("INSERT INTO users (email,fullname,password_hash) VALUES ($1, $2, $3) RETURNING id, fullname, email, created_at")
         .bind(&input.email)
