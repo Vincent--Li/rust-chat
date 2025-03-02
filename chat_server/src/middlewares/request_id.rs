@@ -2,7 +2,7 @@ use axum::{extract::Request, http::HeaderValue, middleware::Next, response::Resp
 use tracing::warn;
 use uuid::Uuid;
 
-const X_REQUEST_ID: &str = "x-request-id";
+use super::X_REQUEST_ID;
 
 pub async fn set_request_id(
     mut req: Request,

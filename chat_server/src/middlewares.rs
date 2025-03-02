@@ -1,6 +1,8 @@
 mod request_id;
+mod server_time;
 
 use request_id::set_request_id;
+use server_time::ServerTimeLayer;
 use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
@@ -11,6 +13,8 @@ use tower_http::{
 use axum::{middleware::from_fn, Router};
 use tracing::Level;
 
+const X_REQUEST_ID: &str = "x-request-id";
+const X_SERVER_TIME: &str = "x-server-time";
 
 pub fn set_layers(app: Router) -> Router {
   app.layer(
@@ -29,6 +33,7 @@ pub fn set_layers(app: Router) -> Router {
           // compression中间件
           .layer(CompressionLayer::new().gzip(true).br(true).deflate(true))
           // from_fn方法，可以将一个普通函数转化成中间件
-          .layer(from_fn(set_request_id)),
+          .layer(from_fn(set_request_id))
+          .layer(ServerTimeLayer),
   )
 }
