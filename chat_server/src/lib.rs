@@ -51,6 +51,7 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
         )
         .route("/chat/:id/messages", get(list_msg_handler))
         // 认证信息,只对上层的route起作用，在后续生命的route不起作用
+        // from_fn_with_state 可以将state和普通方法转换为layer进行拦截
         .layer(from_fn_with_state(state.clone(), verify_token))
         .route("/signin", post(signin_handler))
         .route("/signup", post(signup_handler));
