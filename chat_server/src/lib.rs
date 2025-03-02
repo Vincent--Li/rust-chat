@@ -3,6 +3,7 @@ mod error;
 mod handlers;
 mod models;
 mod utils;
+mod middlewares;
 
 use anyhow::Context;
 use handlers::*;
@@ -14,8 +15,9 @@ use std::{
 };
 use utils::{DecodingKey, EncodingKey};
 
-pub use error::*;
+pub use error::{AppError,ErrorOutput};
 pub use models::User;
+pub use middlewares::set_layers;
 
 use axum::{
     routing::{get, patch, post},
@@ -50,12 +52,15 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
                 .delete(delete_chat_handler)
                 .post(send_msg_handler),
         )
-        .route("/chat/:id/messages", get(list_msg_handler));
+        .route("/chat/:id/messages", get(list_msg_handler))
+        // 添加中间件路由
+        ;
 
-    Ok(Router::new()
+    let app = Router::new()
         .route("/", get(index_handler))
         .nest("/api", api)
-        .with_state(state))
+        .with_state(state);
+    Ok(set_layers(app))
 }
 
 // 当使用 state.config 实际上自动引用了 state.inner.config 中的值
@@ -68,7 +73,7 @@ impl Deref for AppState {
 }
 
 impl AppState {
-        pub async fn try_new(config: AppConfig) -> Result<Self, AppError> {
+    pub async fn try_new(config: AppConfig) -> Result<Self, AppError> {
         let ek = EncodingKey::load_pem(&config.auth.sk).context("load ek failed")?;
         let dk = DecodingKey::load_pem(&config.auth.pk).context("load sk failed")?;
         let pool = PgPool::connect(&config.server.db_url)
@@ -83,8 +88,6 @@ impl AppState {
             }),
         })
     }
-
-    
 }
 
 impl fmt::Debug for AppStateInner {
@@ -97,22 +100,20 @@ impl fmt::Debug for AppStateInner {
 
 #[cfg(test)]
 impl AppState {
-    pub async fn new_for_test(config: AppConfig) -> Result<(sqlx_db_tester::TestPg, Self), AppError> {
-        use std::path::Path;
+    pub async fn new_for_test(
+        config: AppConfig,
+    ) -> Result<(sqlx_db_tester::TestPg, Self), AppError> {
         use sqlx_db_tester::TestPg;
-    
+        use std::path::Path;
+
         let ek = EncodingKey::load_pem(&config.auth.sk).context("test load sk failed")?;
 
         let dk = DecodingKey::load_pem(&config.auth.pk).context("test load pk failed")?;
         let post = config.server.db_url.rfind('/').expect("invalid db_url");
 
         let server_url = String::from(&config.server.db_url[..post]) + "/test";
-        let tdb = TestPg::new(
-            server_url,
-             Path::new("../migrations")
-            );
-        let pool = tdb.get_pool()
-            .await;
+        let tdb = TestPg::new(server_url, Path::new("../migrations"));
+        let pool = tdb.get_pool().await;
         let state = Self {
             inner: Arc::new(AppStateInner {
                 config,
@@ -124,4 +125,3 @@ impl AppState {
         Ok((tdb, state))
     }
 }
-

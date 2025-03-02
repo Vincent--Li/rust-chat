@@ -1,4 +1,4 @@
-use axum::{extract::State, http::{StatusCode}, response::IntoResponse, Json};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use axum_macros::debug_handler;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;

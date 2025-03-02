@@ -6,7 +6,8 @@ pub(crate) use auth::*;
 use axum_macros::debug_handler;
 pub(crate) use chat::*;
 pub(crate) use messages::*;
-use tracing::instrument;
+
+use tracing::{instrument};
 
 #[debug_handler]
 #[instrument]
