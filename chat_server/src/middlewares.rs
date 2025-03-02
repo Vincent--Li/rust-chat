@@ -1,5 +1,6 @@
 mod request_id;
 mod server_time;
+mod auth;
 
 use request_id::set_request_id;
 use server_time::ServerTimeLayer;
@@ -9,9 +10,10 @@ use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
     LatencyUnit,
 };
-
 use axum::{middleware::from_fn, Router};
 use tracing::Level;
+
+pub(crate) use auth::verify_token;
 
 const X_REQUEST_ID: &str = "x-request-id";
 const X_SERVER_TIME: &str = "x-server-time";

@@ -17,11 +17,10 @@ use utils::{DecodingKey, EncodingKey};
 
 pub use error::{AppError,ErrorOutput};
 pub use models::User;
-pub use middlewares::set_layers;
+pub(crate) use middlewares::{set_layers,verify_token};
 
 use axum::{
-    routing::{get, patch, post},
-    Router,
+    middleware::from_fn_with_state, routing::{get, patch, post}, Router
 };
 
 pub use config::AppConfig;
@@ -43,8 +42,6 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
     let state = AppState::try_new(config).await?;
 
     let api = Router::new()
-        .route("/signin", post(signin_handler))
-        .route("/signup", post(signup_handler))
         .route("/chat", get(list_chat_handler).post(create_chat_handler))
         .route(
             "/chat/:id",
@@ -53,8 +50,10 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
                 .post(send_msg_handler),
         )
         .route("/chat/:id/messages", get(list_msg_handler))
-        // 添加中间件路由
-        ;
+        // 认证信息,只对上层的route起作用，在后续生命的route不起作用
+        .layer(from_fn_with_state(state.clone(), verify_token))
+        .route("/signin", post(signin_handler))
+        .route("/signup", post(signup_handler));
 
     let app = Router::new()
         .route("/", get(index_handler))
