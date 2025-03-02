@@ -3,7 +3,6 @@ use std::mem;
 use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
 
 use argon2::{Argon2, PasswordVerifier};
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
@@ -176,7 +175,7 @@ impl User {
             fullname: fullname.to_string(),
             email: email.to_string(),
             password_hash: None,
-            created_at: Utc::now(),
+            created_at: chrono::Utc::now(),
         }
     }
 }
