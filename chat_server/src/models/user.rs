@@ -10,14 +10,14 @@ use sqlx::PgPool;
 use crate::AppError;
 use crate::User;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateUser {
     pub fullname: String,
     pub email: String,
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SigninUser {
     pub email: String,
     pub password: String,
@@ -146,6 +146,23 @@ mod tests {
         assert!(user.is_some());
 
         Ok(())
+    }
+
+    #[tokio::test]
+    async fn create_duplicate_user_should_fail() -> Result<()> {
+        let tdb = TestPg::new(
+            "postgres://vincent:vincent@localhost:5432/chat".to_string(),
+            Path::new("../migrations"),
+        );
+        let pool = tdb.get_pool().await;
+        let input = CreateUser::new("vincent", "vincent@gmail.com", "password");
+        let user = User::create(&input, &pool).await.unwrap();
+        assert!(user.id > 0);
+        let input = CreateUser::new("vincent", "vincent@gmail.com", "password");
+        let user = User::create(&input, &pool).await;
+        assert!(user.is_err());
+
+        Ok(()) 
     }
 }
 

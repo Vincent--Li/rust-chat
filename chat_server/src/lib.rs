@@ -14,7 +14,7 @@ use std::{
 };
 use utils::{DecodingKey, EncodingKey};
 
-pub use error::AppError;
+pub use error::*;
 pub use models::User;
 
 use axum::{

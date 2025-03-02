@@ -1,6 +1,11 @@
 use axum::{http::{header::InvalidHeaderValue, StatusCode}, response::{IntoResponse, Response}, Json};
-use serde_json::json;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ErrorOutput {
+    pub error: String,
+}
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -34,6 +39,12 @@ impl IntoResponse for AppError {
             AppError::EmailAlreadyExists(_) => StatusCode::CONFLICT,
         };
 
-        (status, Json(json!({ "error" : self.to_string()}))).into_response()
+        (status, Json(ErrorOutput::new(self.to_string()))).into_response()
+    }
+}
+
+impl ErrorOutput {
+    pub fn new(error: impl Into<String>) -> Self {
+        Self { error : error.into() }
     }
 }

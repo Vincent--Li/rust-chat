@@ -68,7 +68,7 @@ mod tests {
 
         let user = User::new(1, "Vincent", "vincent@gmail.com");
         let token = ek.sign_token(user)?;
-        dk.verify(token.as_str());
+        let _ = dk.verify(token.as_str());
 
         Ok(())
     }
