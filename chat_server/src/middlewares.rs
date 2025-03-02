@@ -28,6 +28,7 @@ pub fn set_layers(app: Router) -> Router {
           )
           // compression中间件
           .layer(CompressionLayer::new().gzip(true).br(true).deflate(true))
+          // from_fn方法，可以将一个普通函数转化成中间件
           .layer(from_fn(set_request_id)),
   )
 }
